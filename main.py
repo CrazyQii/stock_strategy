@@ -1,45 +1,40 @@
-import requests
-import time
+import Ig507Api
+import MongDB
 import talib
 
-license = '9F83CEA9-6399-A249-E1BC-94B317827892'
-
-stock_list = []
-
-def get_stock_list() -> list:
-    """ 基础股票列表 """
-    try:
-        url = f'http://ig507.com/data/base/gplist?licence={license}'
-        resp = requests.get(url)
-        if resp.status_code == 200:
-            for item in resp.json():
-                stock_list.append({
-                    'code': item['dm'],
-                    'name': item['mc'],
-                    'jys': item['jys']
-                })
-    except Exception as e:
-        print(f'股票基础列表错误:{e}')
-    finally:
-        return stock_list
-
-def get_stock_detail(stock_code, time_level) -> dict:
-    """ 获取股票历史分时交易信息 """
-    stock = {}
-    try:
-        url = f'https://ig507.com/data/time/history/trade/{stock_code}/{time_level}?licence={license}'
-        resp = requests.get(url)
-        if resp.status_code == 200:
-            print(resp.json())
-    except Exception as e:
-        print(e)
-    finally:
-        return stock
-
+mongo = MongDB.MyDataBase()
 
 if __name__ == '__main__':
-    # get_stock_list()
-    print(get_stock_detail('688039', 'Day'))
+
+    base_stock_list = Ig507Api.get_stock_list()
+    print("获取完成")
+    collections = mongo.get_mongo_col(mongo.BASE_STOCK_LIST)
+
+    for stock in base_stock_list:
+        try:
+            collections.insert_one(stock)
+        except Exception as e:
+            continue
+
+
+    # time.sleep(2)
+    # # 股票市净率
+    # base_stock_roe = get_stock_roe()
+    # time.sleep(2)
+    # # 股票流通市值
+    # base_stock_ltsz = get_stock_ltsz()
+    # # 汇总数据
+    # stock_list = []
+    #
+    #
+    # for stock, roe, ltsz in itertools.product(base_stock_list, base_stock_roe, base_stock_ltsz):
+    #     if stock['dm'] == roe['dm'] and stock['jys']+stock['dm'] == ltsz['dm']:
+    #         stock.update(roe)
+    #         stock.update(ltsz)
+    #         stock_list.append(stock)
+    #         print(stock)
+
+    # print(num)
     # stock_list.sort(key=lambda stock: stock['code'])
     # stock_list.sort(key=lambda stock: stock['code'], reverse=True)
-    print(stock_list)
+    # print(stock_list)
